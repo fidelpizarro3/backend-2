@@ -57,8 +57,8 @@ app.get("/", (req, res) => {
   res.render("home", { title: "HOME" });
 });
 
-app.use("/api/sessions", userRoutes);//v1/api/algo v2/api/algo
-app.use("/", viewRoutes);//SSR
+app.use("/api/sessions", userRoutes);
+app.use("/", viewRoutes);
 
 //listeners
 app.listen(app.get("PORT"), () => {
