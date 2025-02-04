@@ -6,6 +6,9 @@ import MongoStore from "connect-mongo";
 import mongoose from "mongoose";
 import userRoutes from "./routes/session.routes.js";
 import viewRoutes from "./routes/views.routes.js";
+import dotenv from "dotenv";
+import 'dotenv/config';
+dotenv.config();
 // PARTE 2
 import initializePassport from "./config/passport.config.js";
 import passport from "passport";

@@ -21,7 +21,11 @@
     <button type="submit">Ingresar</button>
   </div>
 </form>
-¿No tienes cuenta?
-<a href="/register">Registrar</a>
-<a href="/api/sessions/auth/google" class="btn btn-google">Registrar con Google</a>
-¿Olvidaste tu contraseña?<a href="/recupero">Recuperar</a>
+
+<!-- Botón para ingresar con GitHub -->
+<form action="/api/sessions/github" method="get">
+  <button type="submit">Ingresar con GitHub</button>
+</form>
+
+<p>¿No tienes cuenta? <a href="/register">Registrar</a></p>
+<p>¿Olvidaste tu contraseña? <a href="/recupero">Recuperar</a></p>

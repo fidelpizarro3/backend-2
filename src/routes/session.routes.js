@@ -127,4 +127,24 @@ router.get("/current", (req, res) => {
   if (!req.session.user) return res.redirect("/login");
   res.send("Hola");
 });
+
+// Iniciar sesión con GitHub
+router.get("/github", passport.authenticate("github", { scope: ["user:email"] }));
+
+// Callback de GitHub
+router.get(
+  "/github/callback",
+  passport.authenticate("github", { failureRedirect: "/login" }),
+  (req, res) => {
+    req.session.user = {
+      first_name: req.user.first_name,
+      last_name: req.user.last_name,
+      email: req.user.email,
+    };
+    res.redirect("/profile");
+  }
+);
+
+
+
 export default router;

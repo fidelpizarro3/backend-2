@@ -1,11 +1,11 @@
 import passport from "passport";
 import local from "passport-local";
-import { Strategy as GoogleStrategy } from "passport-google-oauth2";
 import userModel from "../models/users.model.js";
 import { createHash, isValidPassword } from "../utils.js";
+import { Strategy as GitHubStrategy } from "passport-github2";
 
-const googleClientId = process.env.GOOGLE_CLIENT_ID;
-const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+const githubClientId = process.env.GITHUB_CLIENT_ID;
+const githubClientSecret = process.env.GITHUB_CLIENT_SECRET;
 
 const LocalStrategy = local.Strategy;
 
@@ -20,7 +20,7 @@ const initializePassport = () => {
       async (req, username, password, done) => {
         const { first_name, last_name, email } = req.body;
         try {
-          const userFound = await userModel.findOne({ email: username }); 
+          const userFound = await userModel.findOne({ email: username });
           if (userFound) {
             console.log("Usuario ya existe");
             return done(null, false);
@@ -68,43 +68,55 @@ const initializePassport = () => {
       }
     )
   );
-//   // GOOGlE register/login
-//   passport.use('google',
-//     new GoogleStrategy({
-//       clientID: googleClientId,
-//       clientSecret:googleClientSecret,
-//       callbackURL:'http://localhost:3000/auth/google/callback'
-//     },async(request, accesToken, refreshToken,profile,done)=>{
-//       try {
-//         const userFound = await userModel.findOne({ email: profile.emails[0]?.value });
-//         if(userFound){
-//           return done(null, userFound)
-//         }
-//           //si no existe lo crea
-//           const newUser = {
-//             first_name: profile.name.givenName || "",
-//             last_name: profile.name.familyName || "",
-//             email: profile.emails[0]?.value || "",
+  
+  passport.use(
+    "github",
+    new GitHubStrategy(
+      {
+        clientID: githubClientId,
+        clientSecret: githubClientSecret,
+        callbackURL: "http://localhost:3000/api/sessions/github/callback",
+        scope: ["user:email"],
+      },
+      async (accessToken, refreshToken, profile, done) => {
+        try {
+          const userFound = await userModel.findOne({ email: profile.emails[0].value });
 
-//             password: "", // Dejar vacío ya que la autenticación es con Google
-//           };
+          if (userFound) {
+            return done(null, userFound);
+          }
 
-//          const user= await userModel.create(newUser)
-//          return done(null, user)
-//       } catch (error) {
-//         return done(error)
-//       }
-//     })
-//   )
+          // Si el usuario no existe, lo creamos
+          const newUser = {
+            first_name: profile.displayName || profile.username,
+            last_name: "",
+            email: profile.emails[0].value,
+            password: "", // No usamos contraseña porque es OAuth
+          };
 
-//   // aca ocurre magia
-//   passport.serializeUser((user, done) => {
-//     done(null, user._id);
-//   });
-//   passport.deserializeUser(async (id, done) => {
-//     const user = await userModel.findById(id);
-//     done(null, user);
-//   });
- };
+          const user = await userModel.create(newUser);
+          return done(null, user);
+        } catch (error) {
+          return done(error);
+        }
+      }
+    )
+  );
+
+  // Serialización del usuario en la sesión
+  passport.serializeUser((user, done) => {
+    done(null, user._id); // Solo guardamos el _id del usuario
+  });
+
+  // Deserialización del usuario desde la sesión
+  passport.deserializeUser(async (id, done) => {
+    try {
+      const user = await userModel.findById(id); // Buscamos al usuario por su _id
+      done(null, user); // Le pasamos el usuario completo a la sesión
+    } catch (error) {
+      done(error, null);
+    }
+  });
+};
 
 export default initializePassport;
