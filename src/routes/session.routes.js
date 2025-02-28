@@ -1,150 +1,75 @@
 import { Router } from "express";
-// PARTE 1
-import userModel from "../models/users.model.js";
-import { createHash, isValidPassword } from "../utils.js";
-
-// PARTE 2
 import passport from "passport";
+import jwt from "jsonwebtoken";
+import productController from "../controllers/productController.js";
+import { isAdmin } from "../middlewares/authMiddleware.js";
+import UserDTO from "../dtos/user.dto.js";
+
 
 const router = Router();
-// rutas post
-// router.post("/register", async (req, res) => {
-//   const { first_name, last_name, email, password } = req.body;
 
-//   try {
-//     const userExist = await userModel.findOne({ email });
-//     if (userExist) {
-//       return res.status(400).json({ message: "El correo ya existe" });
-//     }
-//     const newUser = {
-//       first_name,
-//       last_name,
-//       email,
-//       password: createHash(password),
-//     };
-//     await userModel.create(newUser);
+router.post("/", isAdmin, productController.create);
+router.put("/:id", isAdmin, productController.update);
+router.delete("/:id", isAdmin, productController.delete);
 
-//     res.status(201).redirect("/login");
-//   } catch (error) {
-//     res
-//       .status(500)
-//       .json({ message: "Error interno del servidor", err: error.message });
-//   }
-// });
-// router.post("/login", async (req, res) => {
-//   const { email, password } = req.body;
-
-//   try {
-//     const userExist = await userModel.findOne({ email:email });
-//     if (userExist) {
-// const isValid =  isValidPassword(password,userExist.password)
-
-//       if (isValid) {
-//         req.session.user = {
-//           first_name: userExist.first_name,
-//           last_name: userExist.last_name,
-//           email: userExist.email,
-//         };
-//         res.redirect("/profile");
-//       } else {
-//         res.status(401).send("Pass inválido");
-//       }
-//     }
-//   } catch (error) {
-//     res
-//       .status(500)
-//       .json({ message: "Error interno del servidor", err: error.mesagge });
-//   }
-// });
-
-// PARTE 2
 router.post(
   "/register",
   passport.authenticate("register", { failureRedirect: "failregister" }),
-  async (req, res) => {
+  (req, res) => {
     res.redirect("/login");
   }
 );
+
 router.get("/failregister", (req, res) => {
-  res
-    .status(400)
-    .send({ status: "error", message: "Error al registrar el usuario" });
+  res.status(400).send({ status: "error", message: "Error al registrar el usuario" });
 });
+
 router.post(
   "/login",
   passport.authenticate("login", { failureRedirect: "faillogin" }),
-  async (req, res) => {
+  (req, res) => {
+    const user = req.user;
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 3600000,
+    });
+
     res.redirect("/profile");
   }
 );
+
 router.get("/faillogin", (req, res) => {
   res.status(400).send({ status: "error", message: "Error al ingresar" });
 });
 
-// google
-router.get('/auth/google',passport.authenticate('google',{scope:["email", "profile"]}))
-// recuperar password
-router.post("/recupero", async (req, res) => {
-  const { email, password } = req.body;
-  try {
-    if (!email || !password) return res.status(400).send("campos requirdos");
-
-    const userFound = await userModel.findOne({ email });
-
-    const hashPass = createHash(password);
-    userFound.password = hashPass;
-
-    await userFound.save();
-    res.redirect("/login");
-  } catch (error) {}
+router.get("/current", passport.authenticate("current", { session: false }), (req, res) => {
+  res.json(req.user);
 });
 
-// logout
 router.post("/logout", (req, res, next) => {
-  //traidcional
-  // if(req.session.user){
-  //   req.session.destroy((err)=>{
-  //     if(!err){
-  //       res.clearCookie('connect.sid')
-  //       res.redirect('/login')
-  //     }else{
-  //       res.send("error al cerrar la sesion")
-  //     }
-  //   })
-  // }
-
-  // passprot
   req.logout((err) => {
     if (err) {
       return next(err);
     }
+    res.clearCookie("token");
     res.redirect("/login");
   });
 });
 
-// despues
-router.get("/current", (req, res) => {
-  if (!req.session.user) return res.redirect("/login");
-  res.send("Hola");
-});
-
-// Iniciar sesión con GitHub
 router.get("/github", passport.authenticate("github", { scope: ["user:email"] }));
 
-// Callback de GitHub
 router.get(
   "/github/callback",
   passport.authenticate("github", { failureRedirect: "/login" }),
   (req, res) => {
-    req.session.user = {
-      first_name: req.user.first_name,
-      last_name: req.user.last_name,
-      email: req.user.email,
-    };
+    req.session.user = new UserDTO(req.user);
     res.redirect("/profile");
   }
 );
-
-
 
 export default router;

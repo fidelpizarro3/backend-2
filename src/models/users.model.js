@@ -1,4 +1,5 @@
 import { Schema, model } from "mongoose";
+import userDao from "../daos/user.dao.js";
 
 const UserSchema = new Schema({
   first_name: {
@@ -17,6 +18,11 @@ const UserSchema = new Schema({
   password: {
     type: String,
     // required: true,
+  },
+  role: {
+    type : String,
+    enum: ['user','admin'],
+    default: 'user',
   },
 });
 
