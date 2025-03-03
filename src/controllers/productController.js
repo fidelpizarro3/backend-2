@@ -1,15 +1,25 @@
+import Product from "../models/product.model.js"; // Asegúrate de importar el modelo de productos
+
 export default {
-    create: (req, res) => {
-      // Aquí va la lógica para crear un producto
-      res.send("Producto creado");
-    },
-    update: (req, res) => {
-      // Aquí va la lógica para actualizar un producto
-      res.send("Producto actualizado");
-    },
-    delete: (req, res) => {
-      // Aquí va la lógica para eliminar un producto
-      res.send("Producto eliminado");
+  async getAllProducts(req, res) {
+    try {
+      const products = await Product.find().lean(); // Convierte los productos a objetos planos
+      return products;
+    } catch (error) {
+      console.error("Error al obtener productos:", error);
+      throw error;
     }
-  };
-  
+  },
+
+  create: (req, res) => {
+    res.send("Producto creado");
+  },
+
+  update: (req, res) => {
+    res.send("Producto actualizado");
+  },
+
+  delete: (req, res) => {
+    res.send("Producto eliminado");
+  }
+};

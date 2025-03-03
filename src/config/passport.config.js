@@ -5,6 +5,9 @@ import jwt from "jsonwebtoken";
 import UserRepository from "../repositories/user.repository.js";
 import UserDTO from "../dtos/user.dto.js";
 import { createHash, isValidPassword } from "../utils.js";
+import dotenv from "dotenv";
+dotenv.config();
+
 
 const githubClientId = process.env.GITHUB_CLIENT_ID;
 const githubClientSecret = process.env.GITHUB_CLIENT_SECRET;

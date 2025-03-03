@@ -7,21 +7,35 @@ import mongoose from "mongoose";
 import userRoutes from "./routes/session.routes.js";
 import viewRoutes from "./routes/views.routes.js";
 import dotenv from "dotenv";
-import 'dotenv/config';
+import "dotenv/config";
+import productRoutes from "./routes/products.router.js";
+import ticketRoutes from "./routes/ticket.routes.js"; 
+
 dotenv.config();
+
 // PARTE 2
 import initializePassport from "./config/passport.config.js";
 import passport from "passport";
-//settings
+
+// settings
 const app = express();
 app.set("PORT", 3000);
-app.engine("handlebars", engine());
+
+//handlebars
+app.engine(
+  "handlebars",
+  engine({
+    runtimeOptions: {
+      allowProtoPropertiesByDefault: true,
+    },
+  })
+);
 app.set("view engine", "handlebars");
 app.set("views", "./src/views");
 
 const secret = "miclave1234";
-// const mongodbUri = "mongodb://127.0.0.1:27017/mongo-store";
-const mongodbUri= process.env.MONGODB_URI;
+const mongodbUri = process.env.MONGODB_URI;
+
 // connect database
 const connectDb = async (uri) => {
   try {
@@ -36,6 +50,7 @@ connectDb(mongodbUri);
 
 // middlewares
 app.use(express.json());
+app.use("/api/tickets", ticketRoutes); // Rutas para el manejo de tickets
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 app.use(cookieParser());
@@ -50,19 +65,21 @@ app.use(
     saveUninitialized: false,
   })
 );
+
 // PARTE 2
-initializePassport()
-app.use(passport.initialize())
-app.use(passport.session())
-//routes
+initializePassport();
+app.use(passport.initialize());
+app.use(passport.session());
+
+// routes
 app.get("/", (req, res) => {
   res.render("home", { title: "HOME" });
 });
-
+app.use("/api/products", productRoutes);
 app.use("/api/sessions", userRoutes);
 app.use("/", viewRoutes);
 
-//listeners
+// listeners
 app.listen(app.get("PORT"), () => {
   console.log(`Server on port ${app.get("PORT")}`);
 });

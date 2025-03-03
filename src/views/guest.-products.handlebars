@@ -1,0 +1,9 @@
+<h1>Productos - Invitado</h1>
+{{#each products}}
+    <div class="product">
+        <h3>{{this.title}}</h3>
+        <p>{{this.description}}</p>
+        <p>Precio: ${{this.price}}</p>
+        <p>Stock: {{this.stock}}</p>
+    </div>
+{{/each}}

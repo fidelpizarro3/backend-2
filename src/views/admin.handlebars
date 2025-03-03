@@ -1,0 +1,10 @@
+<h1>Productos - Admin</h1>
+{{#each products}}
+    <div class="product">
+        <h3>{{this.title}}</h3>
+        <p>{{this.description}}</p>
+        <p>Precio: ${{this.price}}</p>
+        <p>Stock: {{this.stock}}</p>
+        <button onclick="editProduct({{this._id}})">Editar Producto</button>
+    </div>
+{{/each}}

@@ -5,13 +5,13 @@ import productController from "../controllers/productController.js";
 import { isAdmin } from "../middlewares/authMiddleware.js";
 import UserDTO from "../dtos/user.dto.js";
 
-
 const router = Router();
 
 router.post("/", isAdmin, productController.create);
 router.put("/:id", isAdmin, productController.update);
 router.delete("/:id", isAdmin, productController.delete);
 
+// Registro de usuario
 router.post(
   "/register",
   passport.authenticate("register", { failureRedirect: "failregister" }),
@@ -24,6 +24,7 @@ router.get("/failregister", (req, res) => {
   res.status(400).send({ status: "error", message: "Error al registrar el usuario" });
 });
 
+// Login de usuario con redirección según rol
 router.post(
   "/login",
   passport.authenticate("login", { failureRedirect: "faillogin" }),
@@ -39,7 +40,21 @@ router.post(
       maxAge: 3600000,
     });
 
-    res.redirect("/profile");
+    // Guardar usuario en la sesión
+    req.session.user = {
+      id: user._id,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      email: user.email,
+      role: user.role,
+    };
+
+    // Redirigir según el rol
+    if (user.role === "admin") {
+      return res.redirect("/products");
+    } else {
+      return res.redirect("/products");
+    }
   }
 );
 
@@ -51,6 +66,7 @@ router.get("/current", passport.authenticate("current", { session: false }), (re
   res.json(req.user);
 });
 
+// Logout
 router.post("/logout", (req, res, next) => {
   req.logout((err) => {
     if (err) {
@@ -61,6 +77,7 @@ router.post("/logout", (req, res, next) => {
   });
 });
 
+// Login con GitHub
 router.get("/github", passport.authenticate("github", { scope: ["user:email"] }));
 
 router.get(
@@ -68,7 +85,13 @@ router.get(
   passport.authenticate("github", { failureRedirect: "/login" }),
   (req, res) => {
     req.session.user = new UserDTO(req.user);
-    res.redirect("/profile");
+    
+    // Redirigir según el rol después de GitHub Login
+    if (req.user.role === "admin") {
+      res.redirect("/admin");
+    } else {
+      res.redirect("/products");
+    }
   }
 );
 
